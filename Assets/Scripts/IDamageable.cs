@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class IDamageable : MonoBehaviour
+public interface IDamageable
 {
-    public void OnDamage(float f, Vector3 v1, Vector3 v2)
+    public void OnDamage(float damage, Vector3 hitPoint, Vector3 hitNormal)
     {
 
     }
