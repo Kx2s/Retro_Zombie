@@ -1,8 +1,8 @@
+using Photon.Pun;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class Gun : MonoBehaviour
+public class Gun : MonoBehaviourPun, IPunObservable
 {
     public enum State
     {
@@ -30,6 +30,29 @@ public class Gun : MonoBehaviour
     public int magAmmo;
 
     private float lastFireTime;
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(ammoRemain);
+            stream.SendNext(magAmmo);
+            stream.SendNext(state);
+        }
+        else
+        {
+            ammoRemain = (int)stream.ReceiveNext();
+            magAmmo = (int)stream.ReceiveNext();
+            state = (State)stream.ReceiveNext();
+        }
+    }
+
+    [PunRPC]
+    public void AddAmmo(int ammo)
+    {
+        ammoRemain += ammo;
+    }
+
 
     private void Awake()
     {
@@ -61,6 +84,17 @@ public class Gun : MonoBehaviour
 
     private void Shot()
     {
+        photonView.RPC("ShotProcessOnServer", RpcTarget.MasterClient);
+        magAmmo--;
+        if (magAmmo <= 0)
+        {
+            state = State.Empty;
+        }
+    }
+
+    [PunRPC]
+    private void ShotProcessOnServer()
+    {
         RaycastHit hit;
         Vector3 hitPosition = Vector3.zero; 
 
@@ -78,16 +112,15 @@ public class Gun : MonoBehaviour
         else
         {
             hitPosition = fireTransform.position + fireTransform.forward * fireDistance;
-            print(fireDistance);
         }
 
+        photonView.RPC("ShotEffectProcessOnClients", RpcTarget.All, hitPosition);
+    }
+
+    [PunRPC]
+    private void ShotEffectProcessOnClients(Vector3 hitPosition)
+    {
         StartCoroutine(ShotEffect(hitPosition));
-
-        magAmmo--;
-        if (magAmmo <= 0)
-        {
-            state = State.Empty;
-        }
     }
 
     private IEnumerator ShotEffect (Vector3 hitPosition)

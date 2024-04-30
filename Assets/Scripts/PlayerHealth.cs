@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Photon.Pun;
 
 public class PlayerHealth : LivingEntity {
     public Slider healthSlider;
@@ -37,6 +38,7 @@ public class PlayerHealth : LivingEntity {
         playerShooter.enabled = true;
     }
 
+    [PunRPC]
     public override void RestoreHealth(float newHealth)
     {
         base.RestoreHealth(newHealth);
@@ -44,6 +46,7 @@ public class PlayerHealth : LivingEntity {
         healthSlider.value = health;
     }
 
+    [PunRPC]
     public override void OnDamage(float damage, Vector3 hitPoint, Vector3 hitNormal)
     {
         if (!dead)
@@ -60,13 +63,15 @@ public class PlayerHealth : LivingEntity {
     {
         base.Die();
 
-        healthSlider.enabled = false;
+        healthSlider.gameObject.SetActive(false);
 
         playerAudioPlayer.PlayOneShot(deathClip);
         playerAnimator.SetTrigger("Die");
 
         playerMovement.enabled = false;
         playerShooter.enabled = false;
+
+        Invoke("Respawn", 5f);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -78,8 +83,27 @@ public class PlayerHealth : LivingEntity {
 
         if (item != null)
         {
-            item.Use(gameObject);
+            if (PhotonNetwork.IsMasterClient)
+            {
+                item.Use(gameObject);
+            }
+
             playerAudioPlayer.PlayOneShot(itemPickupClip);
         }
+    }
+
+    public void Respawn()
+    {
+        if (photonView.IsMine)
+        {
+            Vector3 randomSpawnPos = Random.insideUnitSphere * 5f;
+            randomSpawnPos.y = 0f;
+
+            transform.position = randomSpawnPos;
+        }
+
+        gameObject.SetActive(false);
+        gameObject.SetActive(true);
+
     }
 }

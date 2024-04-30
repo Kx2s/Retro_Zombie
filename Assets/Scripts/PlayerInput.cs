@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
 
-public class PlayerInput : MonoBehaviour
+public class PlayerInput : MonoBehaviourPun
 {
     public string moveAxisName = "Vertical";
     public string rotateAxisName = "Horizontal";
@@ -16,6 +15,9 @@ public class PlayerInput : MonoBehaviour
 
     private void Update()
     {
+        if (!photonView.IsMine)
+            return;
+
         if (GameManager.instance != null && GameManager.instance.isGameover)
         {
             move = 0;

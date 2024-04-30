@@ -27276,6 +27276,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -3741736838799991954, guid: 5580dfacb6596a24da6f7271b6d75d91, type: 3}
+      propertyPath: sceneViewId
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -3741736838799991954, guid: 5580dfacb6596a24da6f7271b6d75d91, type: 3}
+      propertyPath: observableSearch
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3741736838799991954, guid: 5580dfacb6596a24da6f7271b6d75d91, type: 3}
+      propertyPath: ObservedComponents.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 915439674548130256, guid: 5580dfacb6596a24da6f7271b6d75d91, type: 3}
       propertyPath: m_Layer
       value: 6
