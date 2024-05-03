@@ -1,5 +1,5 @@
+using Photon.Pun;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -42,21 +42,29 @@ public class Zombie : LivingEntity
         zombieRenderer = GetComponentInChildren<Renderer>();
     }
 
-    public void Setup(ZombieData zombieData)
+    [PunRPC]
+    public void Setup(float newHealth, float newDamage, float newSpeed, Color skinColor)
     {
-        startingHealth = zombieData.health;
-        damage = zombieData.damage;
-        navMeshAgent.speed = zombieData.speed;
-        zombieRenderer.material.color = zombieData.skinColor;
+        startingHealth = newHealth;
+        health = newHealth;
+        damage = newDamage;
+        navMeshAgent.speed = newSpeed;
+        zombieRenderer.material.color = skinColor;
     }
 
     private void Start()
     {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
         StartCoroutine(UpdatePath());
     }
 
     private void Update()
     {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
         zombieAnimator.SetBool("HasTarget", hasTarget);
     }
 
@@ -92,6 +100,7 @@ public class Zombie : LivingEntity
         }
     }
 
+    [PunRPC]
     public override void OnDamage(float damage, Vector3 hitPoint, Vector3 hitNormal)
     {
         if (!dead)
@@ -125,6 +134,9 @@ public class Zombie : LivingEntity
 
     private void OnTriggerStay(Collider other)
     {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
         if (dead || Time.time < lastAttackTime + timeBetAttack)
             return;
 

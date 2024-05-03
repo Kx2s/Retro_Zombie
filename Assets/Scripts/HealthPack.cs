@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
 
-public class HealthPack : MonoBehaviour, IItem
+public class HealthPackPUN : MonoBehaviourPun, IItem
 {
     public float health = 50;
 
@@ -15,6 +14,6 @@ public class HealthPack : MonoBehaviour, IItem
             life.RestoreHealth(health);
         }
 
-        Destroy(gameObject);
+        PhotonNetwork.Destroy(gameObject);
     }
 }

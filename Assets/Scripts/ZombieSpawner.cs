@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
+using ExitGames.Client.Photon;
 
-public class ZombieSpawner : MonoBehaviour
+public class ZombieSpawner : MonoBehaviourPun, IPunObservable
 {
     public Zombie zombiePrefab;
 
@@ -10,24 +12,50 @@ public class ZombieSpawner : MonoBehaviour
     public Transform[] spawnPoints;
 
     private List<Zombie> zombies = new List<Zombie>();
+
+    private int zombieCount = 0;
     private int wave;
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if(stream.IsWriting)
+        {
+            stream.SendNext(zombies.Count);
+            stream.SendNext(wave);
+        }
+        else
+        {
+            zombieCount = (int)stream.ReceiveNext();
+            wave = (int)stream.ReceiveNext();
+        }
+    }
+
+    private void Awake()
+    {
+        PhotonPeer.RegisterType(typeof(Color), 128, ColorSerialization.SerializeColor, ColorSerialization.DeserializeColor);
+    }
 
     private void Update()
     {
-        if (GameManager.instance != null && GameManager.instance.isGameover)
-            return;
-
-        if (zombies.Count <= 0)
+        if (PhotonNetwork.IsMasterClient)
         {
-            SpawnWave();
-        }
+            if (GameManager.instance != null && GameManager.instance.isGameover)
+                return;
 
+            if (zombies.Count <= 0)
+            {
+                SpawnWave();
+            }
+        }
         UpdateUI();
     }
 
     private void UpdateUI()
     {
-        UIManager.instance.UpdateWaveText(wave, zombies.Count);
+        if(PhotonNetwork.IsMasterClient)
+            UIManager.instance.UpdateWaveText(wave, zombies.Count);
+        else
+            UIManager.instance.UpdateWaveText(wave, zombieCount);
     }
 
     private void SpawnWave()
@@ -45,16 +73,25 @@ public class ZombieSpawner : MonoBehaviour
     private void CreateZombie()
     {
         ZombieData zombieData = zombieDatas[Random.Range(0, zombieDatas.Length)];
-
         Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
 
-        Zombie zombie = Instantiate(zombiePrefab, spawnPoint.position, spawnPoint.rotation);
+        GameObject createdZombie = PhotonNetwork.Instantiate(zombiePrefab.gameObject.name, spawnPoint.position, spawnPoint.rotation);
 
-        zombie.Setup(zombieData);
+        Zombie zombie = createdZombie.GetComponent<Zombie>();
+        zombie.photonView.RPC("Setup", RpcTarget.All, zombieData.health, zombieData.damage, zombieData.speed, zombieData.skinColor);
+
         zombies.Add(zombie);
 
         zombie.onDeath += () => zombies.Remove(zombie);
-        zombie.onDeath += () => Destroy(zombie.gameObject, 10f);
+        zombie.onDeath += () => StartCoroutine(DestroyAfter(zombie.gameObject, 10f));
         zombie.onDeath += () => GameManager.instance.AddScore(100);
+    }
+    IEnumerator DestroyAfter(GameObject target, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (target != null)
+            PhotonNetwork.Destroy(target);
+
     }
 }

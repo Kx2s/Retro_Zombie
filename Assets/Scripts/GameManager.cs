@@ -1,8 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviourPunCallbacks, IPunObservable
 {
     public static GameManager instance
     {
@@ -19,6 +19,20 @@ public class GameManager : MonoBehaviour
 
     private int score = 0;
     public bool isGameover { get; private set; }
+    public GameObject playerPrefab;
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(score);
+        }
+        else
+        {
+            score = (int)stream.ReceiveNext();
+            UIManager.instance.UpdateScoreText(score);
+        }
+    }
 
     private void Awake()
     {
@@ -28,6 +42,11 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        Vector3 randomSpawnPos = Random.insideUnitSphere * 5f;
+        randomSpawnPos.y = 0f;
+
+        PhotonNetwork.Instantiate(playerPrefab.name, randomSpawnPos, Quaternion.identity);
+
         FindObjectOfType<PlayerHealth>().onDeath += EndGame;
     }
 
@@ -44,5 +63,16 @@ public class GameManager : MonoBehaviour
     {
         isGameover = true;
         UIManager.instance.SetActiveGameoverUI(true);
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+            PhotonNetwork.LeaveRoom();
+    }
+
+    public override void OnLeftRoom()
+    {
+        SceneManager.LoadScene("Lobby");
     }
 }

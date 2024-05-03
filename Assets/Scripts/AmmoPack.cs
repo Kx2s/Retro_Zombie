@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
 
-public class AmmoPack : MonoBehaviour, IItem
+public class AmmoPack : MonoBehaviourPun, IItem
 {
     public int ammo = 30;
 
@@ -12,9 +11,9 @@ public class AmmoPack : MonoBehaviour, IItem
 
         if (playerShooter != null && playerShooter.gun != null)
         {
-            playerShooter.gun.ammoRemain += ammo;
+            playerShooter.gun.photonView.RPC("AddAmmo", RpcTarget.All, ammo);
         }
 
-        Destroy(gameObject);
+        PhotonNetwork.Destroy(gameObject);
     }
 }

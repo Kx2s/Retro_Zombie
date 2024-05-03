@@ -17,19 +17,19 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         PhotonNetwork.ConnectUsingSettings();
 
         joinButton.interactable = false;
-        connectionInfoText.text = "마스터 서버에 접속 중...";        
+        connectionInfoText.text = "Connecting to master server...";        
     }
 
     public override void OnConnectedToMaster()
     {
         joinButton.interactable = true;
-        connectionInfoText.text = "온라인 : 마스터 서버와 연결됨";
+        connectionInfoText.text = "Online: Connected to master server";
     }
 
     public override void OnDisconnected(DisconnectCause cause)
     {
         joinButton.interactable = false;
-        connectionInfoText.text = "오프라인 : 마스터 서버와 연결되지 않음\n접속 재시도 중...";
+        connectionInfoText.text = "Offline: Not connected to master server\nRetrying connection...";
 
         PhotonNetwork.ConnectUsingSettings();
     }
@@ -40,25 +40,25 @@ public class LobbyManager : MonoBehaviourPunCallbacks
 
         if (PhotonNetwork.IsConnected)
         {
-            connectionInfoText.text = "룸에 접속...";
+            connectionInfoText.text = "Access the room...";
             PhotonNetwork.JoinRandomRoom();
         }
         else
         {
-            connectionInfoText.text = "오프라인 : 마스터 서버와 연결되지 않음\n접속 재시도 중...";
+            connectionInfoText.text = "Offline: Not connected to master server\nRetrying connection...";
             PhotonNetwork.ConnectUsingSettings();
         }
     }
 
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
-        connectionInfoText.text = "빈 방이 없음, 새로운 방을 생성...";
+        connectionInfoText.text = "There are no empty rooms, create a new room...";
         PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = 4 });
     }
 
     public override void OnJoinedRoom()
     {
-        connectionInfoText.text = "방 참가 성공";
+        connectionInfoText.text = "Successfully joined the room";
         PhotonNetwork.LoadLevel("Main");
     }
 }

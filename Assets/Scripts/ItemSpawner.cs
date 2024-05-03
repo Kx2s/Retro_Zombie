@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using Photon.Pun;
 
-public class ItemSpawner : MonoBehaviour
+public class ItemSpawner : MonoBehaviourPun
 {
     public GameObject[] items;
     public Transform playerTransform;
@@ -24,6 +25,9 @@ public class ItemSpawner : MonoBehaviour
 
     private void Update()
     {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
         if (Time.time >= lastSpawnTime + timeBetSpawn && playerTransform != null)
         {
             lastSpawnTime = Time.time;
@@ -35,13 +39,21 @@ public class ItemSpawner : MonoBehaviour
     private void Spawn()
     {
         Vector3 spawnPosition =
-            GetRandomPointOnNavMesh(playerTransform.position, maxDistance);
+            GetRandomPointOnNavMesh(Vector3.zero, maxDistance);
         spawnPosition += Vector3.up * 0.5f;
 
         GameObject selectedItem = items[Random.Range(0, items.Length)];
-        GameObject item = Instantiate(selectedItem, spawnPosition, Quaternion.identity);
+        GameObject item = PhotonNetwork.Instantiate(selectedItem.name, spawnPosition, Quaternion.identity);
 
-        Destroy(item, 5f);
+        StartCoroutine(DestroyAfter(item, 5f));
+    }
+
+    IEnumerator DestroyAfter(GameObject target, float delay) {
+        yield return new WaitForSeconds(delay);
+
+        if (target != null)
+            PhotonNetwork.Destroy(target);
+
     }
 
     private Vector3 GetRandomPointOnNavMesh(Vector3 center, float distance)
